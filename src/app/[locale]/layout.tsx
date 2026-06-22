@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { ClerkProvider } from '@clerk/nextjs';
 import { routing, type Locale } from '@/i18n/routing';
 import { fontVariables } from '@/lib/fonts';
 import { SiteHeader } from '@/components/lamma/SiteHeader';
@@ -71,14 +72,16 @@ export default async function LocaleLayout({ children, params }: Props & { child
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning className={fontVariables}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <div className="flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="flex-1" id="main-content">{children}</main>
-            <SiteFooter />
-          </div>
-          <InstallPrompt />
-        </NextIntlClientProvider>
+        <ClerkProvider>
+          <NextIntlClientProvider messages={messages}>
+            <div className="flex min-h-screen flex-col">
+              <SiteHeader />
+              <main className="flex-1" id="main-content">{children}</main>
+              <SiteFooter />
+            </div>
+            <InstallPrompt />
+          </NextIntlClientProvider>
+        </ClerkProvider>
         <Toaster />
         <script
           dangerouslySetInnerHTML={{

@@ -1,62 +1,55 @@
 // ============================================================================
-//  Lamma — Prisma Schema (Phase 0)
-//  Adapted for SQLite. Every line that must change when migrating to
-//  PostgreSQL is marked with `// PROD-ONLY:` so the migration is mechanical.
-//  See /GLM-5.2-FullStack-Build-Reference.md and the project documentation.
+//  Lamma — Prisma Schema (Phase B — PostgreSQL + pgvector)
 //
-//  SQLite adaptation rules applied:
-//    Json                    -> String  (JSON.stringify / JSON.parse in code)
-//    String[]                -> String  (join with "|" or use a join table)
-//    Unsupported("vector")   -> String? (JSON array mock of the embedding)
-//    Decimal(10,3)           -> Float   (KWD 3-decimal precision)
-//    enum                    -> String  (+ Zod validation in src/data/types.ts)
-//    @db.Date / @db.Text     -> DateTime / String
+//  Target: Supabase PostgreSQL with pgvector + pg_trgm extensions.
+//
+//  Type mapping (from Phase A SQLite):
+//    String (JSON)        → Json           (name, bio, displayName, etc.)
+//    String (joined |)    → String[]       (interests, specialties, topicSlugs)
+//    String? (mock vec)   → Unsupported("vector(1536)")?  (embedding)
+//    Float (KWD)          → Decimal @db.Decimal(10,3)
+//    String (date)        → DateTime @db.Date
+//    String (long text)   → String @db.Text
 // ============================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  // SQLite is used for local dev and the first Railway deploy (Phase A).
-  // For production with PostgreSQL (Phase B), change to:
-  //   provider   = "postgresql"
-  //   directUrl  = env("DIRECT_URL")
-  //   extensions = [vector, pg_trgm]
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector, pg_trgm]
 }
 
 // ----------------------------------------------------------------------------
-//  User
+//  User — synced from Clerk via webhook (id = Clerk userId)
 // ----------------------------------------------------------------------------
 model User {
-  id              String   @id @default(cuid())
+  id              String   @id // Clerk userId (no auto-generation)
   email           String   @unique
   phone           String?  @unique
-  passwordHash    String
+  passwordHash    String   @default("") // unused with Clerk, kept for compat
 
-  // PROD-ONLY: name should be Json { ar, en } — use JSON.parse
-  name            String
-  // PROD-ONLY: bio should be Json { ar, en }
-  bio             String?
+  name            Json     // { ar: "...", en: "..." }
+  bio             Json?    // { ar: "...", en: "..." }
   avatarUrl       String?
   dateOfBirth     DateTime?
-  gender          String?  // enum: "male" | "female"
+  gender          String?  // "male" | "female"
   nationality     String?
 
-  // PROD-ONLY: interests should be String[] — use split('|')
-  interests       String   @default("")
-  // PROD-ONLY: embedding should be Unsupported("vector(1536)") — JSON array mock here
-  embedding       String?
+  interests       String[] // ["photography", "art", ...]
+  embedding       Unsupported("vector(1536)")?
 
-  membershipTier  String   @default("NEWCOMER") // enum: NEWCOMER | REGULAR | CURATOR | HOST
+  membershipTier  String   @default("NEWCOMER") // NEWCOMER | REGULAR | CURATOR | HOST
   hostedCount     Int      @default(0)
   attendedCount   Int      @default(0)
 
   emailVerifiedAt DateTime?
   lastLoginAt     DateTime?
-  locale          String   @default("ar") // enum: ar | en
+  locale          String   @default("ar") // ar | en
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -85,18 +78,15 @@ model Host {
   userId          String   @unique
   handle          String   @unique // @handle, e.g. @abdullah_kuwaiti_historian
 
-  // PROD-ONLY: displayName / bio should be Json { ar, en }
-  displayName     String
-  bio             String
+  displayName     Json     // { ar, en }
+  bio             Json     // { ar, en }
   avatarUrl       String?
   coverUrl        String?
   isVerified      Boolean  @default(false)
   verifiedAt      DateTime?
 
-  // PROD-ONLY: specialties should be Json[] or String[] — use split('|')
-  specialties     String   @default("")
-  // PROD-ONLY: topicSlugs should be String[] — use split('|')
-  topicSlugs      String   @default("")
+  specialties     Json[]   // [{ ar, en }, ...]
+  topicSlugs      String[] // ["memory-of-place", "food-stories", ...]
 
   totalGatherings Int      @default(0)
   totalAttendees  Int      @default(0)
@@ -121,9 +111,8 @@ model Host {
 model Topic {
   id              String   @id @default(cuid())
   slug            String   @unique // memory-of-place, food-stories, ...
-  // PROD-ONLY: name / description should be Json { ar, en }
-  name            String
-  description     String
+  name            Json     // { ar, en }
+  description     Json     // { ar, en }
   color           String   @default("#B85C3E") // hex
   coverImageUrl   String?
 
@@ -143,35 +132,29 @@ model Gathering {
   id              String   @id @default(cuid())
   slug            String   @unique
 
-  // PROD-ONLY: title / description should be Json { ar, en }
-  title           String
-  description     String
+  title           Json     // { ar, en }
+  description     Json     // { ar, en }
   coverImageUrl   String?
-  // PROD-ONLY: galleryUrls should be String[] — use split('|')
-  galleryUrls     String   @default("")
+  galleryUrls     String[] // ["url1", "url2", ...]
 
   startDate       DateTime
   endDate         DateTime
   isPrayerAware   Boolean  @default(true)
 
-  // PROD-ONLY: venueName / venueAddress / venueNotes should be Json { ar, en }
-  venueName       String
-  venueAddress    String
+  venueName       Json     // { ar, en }
+  venueAddress    Json     // { ar, en }
   venueLat        Float
   venueLng        Float
-  venueNotes      String   @default("")
+  venueNotes      Json?    // { ar, en }
 
-  format          String   @default("MIXED") // enum: MEN_ONLY | WOMEN_ONLY | FAMILY | MIXED
+  format          String   @default("MIXED") // MEN_ONLY | WOMEN_ONLY | FAMILY | MIXED
   capacityMin     Int      @default(5)
   capacityMax     Int      @default(20)
-  // PROD-ONLY: priceKwd should be Decimal(10,3) — KWD 3-decimal precision
-  priceKwd        Float    @default(0)
+  priceKwd        Decimal  @default(0) @db.Decimal(10, 3) // KWD 3-decimal precision
   isFree          Boolean  @default(false)
 
-  // PROD-ONLY: applicationQuestions should be Json[] — store as JSON string
-  applicationQuestions String @default("[]")
-
-  status          String   @default("DRAFT") // enum: DRAFT | PUBLISHED | APPLICATIONS_OPEN | APPLICATIONS_CLOSED | IN_PROGRESS | COMPLETED | CANCELLED
+  applicationQuestions Json? // [{ id, question: {ar,en}, type, required, options? }]
+  status          String   @default("DRAFT") // DRAFT | PUBLISHED | APPLICATIONS_OPEN | APPLICATIONS_CLOSED | IN_PROGRESS | COMPLETED | CANCELLED
   applicationsOpenAt   DateTime?
   applicationsCloseAt  DateTime?
 
@@ -205,10 +188,9 @@ model Application {
   userId          String
   gatheringId     String
 
-  // PROD-ONLY: answers should be Json[] — store as JSON string of Q&A pairs
-  answers         String   @default("[]")
-  status          String   @default("PENDING") // enum: PENDING | APPROVED | REJECTED | WAITLISTED | CANCELLED
-  note            String?
+  answers         Json     // [{ questionId, answer: {ar,en} }] or { questionId: answer }
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | WAITLISTED | CANCELLED
+  note            String?  @db.Text
 
   reviewedAt      DateTime?
   reviewedBy      String? // host userId
@@ -230,7 +212,7 @@ model Application {
 model Membership {
   id              String   @id @default(cuid())
   userId          String
-  tier            String   @default("NEWCOMER") // enum: NEWCOMER | REGULAR | CURATOR | HOST
+  tier            String   @default("NEWCOMER") // NEWCOMER | REGULAR | CURATOR | HOST
   startedAt       DateTime @default(now())
   endedAt         DateTime?
   note            String?
@@ -250,18 +232,19 @@ model Letter {
   id              String   @id @default(cuid())
   slug            String   @unique
 
-  // PROD-ONLY: title / subtitle / excerpt / content should be Json { ar, en }
-  title           String
-  subtitle        String
-  excerpt         String
-  content         String   // Markdown
+  title           Json     // { ar, en }
+  subtitle        Json?    // { ar, en }
+  excerpt         Json     // { ar, en }
+  content         Json     // { ar: "markdown...", en: "markdown..." }
   coverImageUrl   String?
-  // PROD-ONLY: galleryUrls should be String[] — use split('|')
-  galleryUrls     String   @default("")
+  galleryUrls     String[] // ["url1", "url2", ...]
   readTimeMinutes Int      @default(5)
 
   publishedAt     DateTime @default(now())
   isPublished     Boolean  @default(false)
+
+  metaTitle       Json?
+  metaDescription Json?
 
   topicId         String
   authorHostId    String
@@ -285,8 +268,7 @@ model Moment {
   id              String   @id @default(cuid())
   gatheringId     String
   imageUrl        String
-  // PROD-ONLY: caption should be Json { ar, en }
-  caption         String
+  caption         Json     // { ar, en }
   capturedByUserId String?
   capturedAt      DateTime @default(now())
 
@@ -303,13 +285,13 @@ model Moment {
 model PrayerTime {
   id              String   @id @default(cuid())
   city            String   @default("Kuwait")
-  date            DateTime // @db.Date in PROD-ONLY
-  fajr            String   // "HH:mm"
-  sunrise         String
-  dhuhr           String
-  asr             String
-  maghrib         String
-  isha            String
+  date            DateTime @db.Date
+  fajr            DateTime
+  sunrise         DateTime
+  dhuhr           DateTime
+  asr             DateTime
+  maghrib         DateTime
+  isha            DateTime
 
   createdAt       DateTime @default(now())
 
@@ -325,9 +307,8 @@ model AttendeeMatch {
   userAId         String
   userBId         String
   gatheringId     String?
-  // PROD-ONLY: score should be Float; affinityTags should be String[]
   score           Float    @default(0)
-  affinityTags    String   @default("")
+  affinityTags    String[] // ["photography", "art"]
   reason          String?
 
   createdAt       DateTime @default(now())
@@ -369,8 +350,7 @@ model Review {
   gatheringId     String?
   hostId          String?
   rating          Int      // 1..5
-  // PROD-ONLY: body should be Json { ar, en } or @db.Text
-  body            String   @default("")
+  body            Json?    // { ar, en }
   isPublic        Boolean  @default(true)
 
   createdAt       DateTime @default(now())
@@ -389,9 +369,8 @@ model Review {
 model Notification {
   id              String   @id @default(cuid())
   userId          String
-  type            String   // enum-ish: GATHERING_REMINDER | APPLICATION_UPDATE | LETTER_PUBLISHED | ...
-  // PROD-ONLY: payload should be Json
-  payload         String   @default("{}")
+  type            String   // GATHERING_REMINDER | APPLICATION_UPDATE | LETTER_PUBLISHED | ...
+  payload         Json     @default("{}")
   isRead          Boolean  @default(false)
   readAt          DateTime?
 
@@ -409,10 +388,8 @@ model Message {
   id              String   @id @default(cuid())
   senderId        String
   receiverId      String
-  // PROD-ONLY: body should be @db.Text
-  body            String
-  // PROD-ONLY: attachments should be Json[]
-  attachments     String   @default("[]")
+  body            String   @db.Text
+  attachments     Json[]   @default([])
   readAt          DateTime?
 
   createdAt       DateTime @default(now())

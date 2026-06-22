@@ -104,4 +104,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Start both services: Next.js (port 3000) + Live Companion (port 3003)
 # IMPORTANT: Use `bun server.js` (not `node server.js`) because the base image
 # `oven/bun:1-slim` does NOT include Node.js — only Bun.
-CMD ["sh", "-c", "echo '=== Lamma startup ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js db push ; bun server.js & cd mini-services/live-companion && bun run start & wait"]
+# Phase B: uses `migrate deploy` (not `db push`) to apply committed migrations.
+CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js migrate deploy ; bun server.js & cd mini-services/live-companion && bun run start & wait"]
