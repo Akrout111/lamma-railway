@@ -69,8 +69,11 @@ ENV HOSTNAME=0.0.0.0
 ENV LIVE_COMPANION_PORT=3003
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
+# NOTE: oven/bun:1-slim is based on Debian slim which does NOT include
+# `addgroup`/`adduser`. Use `groupadd`/`useradd` (from `passwd` package)
+# which are always available.
+RUN groupadd --system --gid 1001 nodejs \
+ && useradd --system --uid 1001 --gid nodejs --home-dir /app --shell /usr/sbin/nologin nextjs
 
 # Create writable db directory (for SQLite fallback during dev/preview)
 RUN mkdir -p /app/db && chown nextjs:nodejs /app/db
