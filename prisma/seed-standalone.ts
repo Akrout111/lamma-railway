@@ -21,11 +21,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding Lamma database...');
 
-  // Dynamically import data (relative paths only — no @/ aliases)
-  const { topics } = await import('../src/data/topics.ts');
-  const { hosts } = await import('../src/data/hosts.ts');
-  const { gatherings } = await import('../src/data/gatherings.ts');
-  const { letters } = await import('../src/data/letters.ts');
+  // Dynamically import data (relative paths, NO extensions — Bun resolves them)
+  const { topics } = await import('../src/data/topics');
+  const { hosts } = await import('../src/data/hosts');
+  const { gatherings } = await import('../src/data/gatherings');
+  const { letters } = await import('../src/data/letters');
 
   // 1. Topics
   console.log(`  → Inserting ${topics.length} topics...`);
