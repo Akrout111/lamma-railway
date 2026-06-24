@@ -1,0 +1,5 @@
+# Prisma migration lock file
+# Please do not remove manually
+# It should be added to your version-control system, e.g., Git
+
+provider = "postgresql"
