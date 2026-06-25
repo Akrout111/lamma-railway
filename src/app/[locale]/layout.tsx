@@ -56,6 +56,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// Force dynamic rendering to prevent Clerk from throwing during static
+// page generation (prerendering) at build time when the publishable key
+// might not be available. All pages in this app are dynamic (auth-dependent).
+export const dynamic = 'force-dynamic';
+
 export default async function LocaleLayout({ children, params }: Props & { children: React.ReactNode }) {
   const { locale } = await params;
 
