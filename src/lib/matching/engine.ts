@@ -15,6 +15,7 @@ export interface MatchableUser {
   id: string;
   nameLocalized: { ar: string; en: string };
   bioLocalized: { ar: string; en: string };
+  avatarUrl?: string;
   interests: string[];
   gender?: 'male' | 'female' | string;
   nationality?: string;

@@ -20,7 +20,7 @@ export function PeopleYouMightKnow() {
       <div className="space-y-3">
         {similar.map(({ user: other, similarity, sharedInterests }) => (
           <div key={other.id} className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-sand">
-            <Avatar className="size-10"><AvatarImage src={other.avatarUrl} alt="" /><AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
+            <Avatar className="size-10">{other.avatarUrl && <AvatarImage src={other.avatarUrl} alt="" />}<AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-ink">{localized(other.nameLocalized, locale)}</p>
               <div className="mt-1 flex flex-wrap gap-1">{sharedInterests.slice(0, 3).map((i) => <span key={i} className="rounded-full bg-teal/10 px-2 py-0.5 text-xs text-teal">{t(`interests.${i}` as 'photography')}</span>)}</div>

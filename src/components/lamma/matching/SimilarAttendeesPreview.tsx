@@ -22,7 +22,7 @@ export function SimilarAttendeesPreview({ gathering }: { gathering: Gathering })
       <div className="grid grid-cols-3 gap-3">
         {similar.map(({ user: other, similarity }) => (
           <div key={other.id} className="text-center">
-            <Avatar className="mx-auto mb-2 size-12"><AvatarImage src={other.avatarUrl} alt="" /><AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
+            <Avatar className="mx-auto mb-2 size-12">{other.avatarUrl && <AvatarImage src={other.avatarUrl} alt="" />}<AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
             <p className="truncate text-xs font-medium text-ink">{localized(other.nameLocalized, locale).split(' ')[0]}</p>
             <p className="text-xs tabular text-teal">{Math.round(similarity * 100)}%</p>
           </div>

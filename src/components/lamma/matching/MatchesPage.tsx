@@ -56,7 +56,7 @@ export function MatchesPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {similarPeople.map(({ user: other, similarity, sharedInterests }) => (
               <div key={other.id} className="flex items-start gap-4 rounded-2xl bg-card p-5 ring-1 ring-border/60">
-                <Avatar className="size-14 shrink-0"><AvatarImage src={other.avatarUrl} alt="" /><AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
+                <Avatar className="size-14 shrink-0">{other.avatarUrl && <AvatarImage src={other.avatarUrl} alt="" />}<AvatarFallback>{localized(other.nameLocalized, locale).charAt(0)}</AvatarFallback></Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-base font-semibold text-ink">{localized(other.nameLocalized, locale)}</p>
                   <p className="mt-0.5 line-clamp-2 text-xs text-stone">{localized(other.bioLocalized, locale)}</p>
