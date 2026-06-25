@@ -56,7 +56,7 @@ export function DashboardHome() {
         </div>
         <aside className="space-y-6 lg:col-span-4">
           <section className="rounded-2xl bg-card p-6 ring-1 ring-border/60">
-            <div className="flex items-center gap-4"><div className="relative size-16 shrink-0 overflow-hidden rounded-full bg-secondary"><Image src={user.avatarUrl} alt="" fill sizes="64px" className="object-cover" /></div><div className="min-w-0"><h3 className="truncate font-display text-lg font-semibold text-ink">{localized(user.nameLocalized, locale)}</h3><p className="truncate text-xs text-stone">{user.email}</p></div></div>
+            <div className="flex items-center gap-4"><div className="relative size-16 shrink-0 overflow-hidden rounded-full bg-secondary">{user.avatarUrl ? <Image src={user.avatarUrl} alt="" fill sizes="64px" className="object-cover" /> : null}</div><div className="min-w-0"><h3 className="truncate font-display text-lg font-semibold text-ink">{localized(user.nameLocalized, locale)}</h3><p className="truncate text-xs text-stone">{user.email}</p></div></div>
             <p className="mt-4 line-clamp-3 text-sm text-ink/70">{localized(user.bioLocalized, locale)}</p>
           </section>
           <section className="rounded-2xl bg-card p-6 ring-1 ring-border/60">
