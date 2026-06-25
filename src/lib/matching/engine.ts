@@ -6,6 +6,21 @@ import { demoUsers, type DemoUser } from '@/data/demo-users';
 import { gatherings, type Gathering } from '@/data/gatherings';
 import { topics } from '@/data/topics';
 
+/**
+ * Minimal user shape required by the matching engine.
+ * Both `DemoUser` (mock) and `AdaptedUser` (Clerk) satisfy this interface,
+ * so the engine works in both Phase A and Phase B without type errors.
+ */
+export interface MatchableUser {
+  id: string;
+  nameLocalized: { ar: string; en: string };
+  bioLocalized: { ar: string; en: string };
+  interests: string[];
+  gender?: 'male' | 'female' | string;
+  nationality?: string;
+  membershipTier: 'NEWCOMER' | 'REGULAR' | 'CURATOR' | 'HOST';
+}
+
 const STOP_WORDS = new Set([
   'في','من','إلى','على','عن','مع','هذا','هذه','التي','الذي','كان','قد','ما','لا','إن','هو','هي','نحن','أنا','أنت','هم','كل','بعض','عند','لكن','أو','ثم','حتى','قبل','بعد',
   'the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','should','could','may','might','must','can',
@@ -65,7 +80,7 @@ function buildVector(weightedTokens: Array<{ token: string; weight: number }>): 
   return { tokens, magnitude: Math.sqrt(magnitude) };
 }
 
-export function buildUserVector(user: DemoUser): ProfileVector {
+export function buildUserVector(user: MatchableUser): ProfileVector {
   const wt: Array<{ token: string; weight: number }> = [];
   for (const i of user.interests) wt.push({ token: i, weight: WEIGHTS.interest });
   for (const t of tokenize(user.bioLocalized.ar)) wt.push({ token: t, weight: WEIGHTS.bio });
@@ -97,7 +112,7 @@ export function cosineSimilarity(a: ProfileVector, b: ProfileVector): number {
   return dot / (a.magnitude * b.magnitude);
 }
 
-export function computeMatchScore(user: DemoUser, gathering: Gathering): number {
+export function computeMatchScore(user: MatchableUser, gathering: Gathering): number {
   const vs = cosineSimilarity(buildUserVector(user), buildGatheringVector(gathering));
   const topicObj = topics.find((t) => t.slug === gathering.topicSlug);
   let topicAlign = 0;
@@ -116,16 +131,16 @@ export function computeMatchScore(user: DemoUser, gathering: Gathering): number 
   return Math.round(Math.min(100, Math.max(50, (0.5 + raw * 0.5) * 100)));
 }
 
-export function computeUserSimilarity(a: DemoUser, b: DemoUser): number {
+export function computeUserSimilarity(a: MatchableUser, b: MatchableUser): number {
   return cosineSimilarity(buildUserVector(a), buildUserVector(b));
 }
 
-export function findSharedInterests(a: DemoUser, b: DemoUser): string[] {
+export function findSharedInterests(a: MatchableUser, b: MatchableUser): string[] {
   const setA = new Set(a.interests);
   return b.interests.filter((i) => setA.has(i));
 }
 
-export function recommendGatheringsForUser(user: DemoUser, opts: { limit?: number; excludePast?: boolean; excludeApplied?: string[] } = {}): Array<{ gathering: Gathering; score: number }> {
+export function recommendGatheringsForUser(user: MatchableUser, opts: { limit?: number; excludePast?: boolean; excludeApplied?: string[] } = {}): Array<{ gathering: Gathering; score: number }> {
   const { limit = 3, excludePast = true, excludeApplied = [] } = opts;
   const now = new Date();
   return gatherings
@@ -142,7 +157,7 @@ export function recommendGatheringsForUser(user: DemoUser, opts: { limit?: numbe
     .slice(0, limit);
 }
 
-export function findSimilarAttendees(user: DemoUser, _slug: string, limit = 3): Array<{ user: DemoUser; similarity: number; sharedInterests: string[] }> {
+export function findSimilarAttendees(user: MatchableUser, _slug: string, limit = 3): Array<{ user: MatchableUser; similarity: number; sharedInterests: string[] }> {
   return demoUsers
     .filter((u) => u.id !== user.id && u.membershipTier !== 'HOST')
     .map((o) => ({ user: o, similarity: computeUserSimilarity(user, o), sharedInterests: findSharedInterests(user, o) }))
@@ -151,7 +166,7 @@ export function findSimilarAttendees(user: DemoUser, _slug: string, limit = 3): 
     .slice(0, limit);
 }
 
-export function computeMeritScore(user: DemoUser, gathering: Gathering, prev = 0): number {
+export function computeMeritScore(user: MatchableUser, gathering: Gathering, prev = 0): number {
   const ts: Record<string, number> = { NEWCOMER: 0.3, REGULAR: 0.6, CURATOR: 0.9, HOST: 1 };
   return Math.round(((Math.min(1, prev / 3)) * 0.4 + (ts[user.membershipTier] ?? 0.3) * 0.3 + (computeMatchScore(user, gathering) / 100) * 0.3) * 100);
 }
