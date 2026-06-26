@@ -130,4 +130,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # The Live Companion service (port 3003) was interfering with Next.js (port 3000)
 # causing "Transport unknown" errors on the homepage.
 # TODO: Re-enable Live Companion as a separate Railway service for production.
-CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; PORT=3000 bun server.js"]
+CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && echo \"PORT: $PORT\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; bun server.js"]
