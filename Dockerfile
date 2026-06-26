@@ -121,5 +121,6 @@ USER nextjs
 # The healthcheck is handled by railway.json (healthcheckPath).
 # Do NOT add Dockerfile HEALTHCHECK — it conflicts with Railway's.
 
-# Start Next.js only (Live Companion temporarily disabled to fix port conflict).
-CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && echo \"PORT: $PORT\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; exec bun server.js"]
+# Start Next.js server only.
+# Migrations are already applied. inject-env.sh removed to isolate startup issues.
+CMD ["sh", "-c", "echo '=== Lamma startup ===' && echo \"PORT: $PORT\" && exec bun server.js"]
