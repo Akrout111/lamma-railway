@@ -18,7 +18,7 @@ export default intlMiddleware;
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and static files
-    '/((?!_next|_vercel|sign-in|sign-up|.*\\..*).*)',
+    // Skip API routes, Next.js internals, and static files
+    '/((?!api|_next|_vercel|sign-in|sign-up|.*\\..*).*)',
   ],
 };

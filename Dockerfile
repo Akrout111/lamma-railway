@@ -117,9 +117,9 @@ RUN chmod +x ./scripts/inject-env.sh
 
 USER nextjs
 
-# Railway injects PORT automatically — do NOT hardcode EXPOSE port.
-# The healthcheck is handled by railway.json (healthcheckPath).
-# Do NOT add Dockerfile HEALTHCHECK — it conflicts with Railway's.
+# Railway auto-detects port from EXPOSE or PORT env var.
+# EXPOSE 8080 helps Railway route healthcheck traffic correctly.
+EXPOSE 8080
 
 # Start Next.js server only.
 CMD ["sh", "-c", "echo '=== Lamma startup ===' && echo \"PORT: $PORT\" && exec bun server.js"]
