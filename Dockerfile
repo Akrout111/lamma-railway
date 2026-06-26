@@ -82,7 +82,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=8080
+# Do NOT set PORT — Railway injects it automatically at runtime.
+# Next.js standalone server.js reads process.env.PORT.
 ENV HOSTNAME=0.0.0.0
 ENV LIVE_COMPANION_PORT=3003
 
@@ -116,18 +117,9 @@ RUN chmod +x ./scripts/inject-env.sh
 
 USER nextjs
 
-# Railway exposes ports via EXPOSE
-EXPOSE 3000
-# Note: 3003 (Live Companion) is internal-only, not exposed externally
-
-# Use ; (not &&) between migrate and server so server starts even if migration fails
-# This is critical: a failed migration should NOT prevent the server from booting
-# (allows debugging via /api/v1/health + Railway logs)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/api/v1/health || exit 1
+# Railway injects PORT automatically — do NOT hardcode EXPOSE port.
+# The healthcheck is handled by railway.json (healthcheckPath).
+# Do NOT add Dockerfile HEALTHCHECK — it conflicts with Railway's.
 
 # Start Next.js only (Live Companion temporarily disabled to fix port conflict).
-# The Live Companion service (port 3003) was interfering with Next.js (port 3000)
-# causing "Transport unknown" errors on the homepage.
-# TODO: Re-enable Live Companion as a separate Railway service for production.
 CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && echo \"PORT: $PORT\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; exec bun server.js"]

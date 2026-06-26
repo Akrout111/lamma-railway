@@ -5,7 +5,6 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "sh -c 'echo \"=== Lamma startup (Phase B) ===\" && echo \"DATABASE_URL: $([ -n \"$DATABASE_URL\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \"$DIRECT_URL\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; bun server.js'",
     "healthcheckPath": "/api/v1/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
