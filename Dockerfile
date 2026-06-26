@@ -126,9 +126,8 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health || exit 1
 
-# Start both services: Next.js (port 3000) + Live Companion (port 3003)
-# IMPORTANT: Use `bun server.js` (not `node server.js`) because the base image
-# `oven/bun:1-slim` does NOT include Node.js — only Bun.
-# Phase B: uses `migrate deploy` (not `db push`) to apply committed migrations.
-# Runtime: inject-env.sh replaces NEXT_PUBLIC_* placeholders before server start.
-CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; bun server.js & cd mini-services/live-companion && bun run start & wait"]
+# Start Next.js only (Live Companion temporarily disabled to fix port conflict).
+# The Live Companion service (port 3003) was interfering with Next.js (port 3000)
+# causing "Transport unknown" errors on the homepage.
+# TODO: Re-enable Live Companion as a separate Railway service for production.
+CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; PORT=3000 bun server.js"]
