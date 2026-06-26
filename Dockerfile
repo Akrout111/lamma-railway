@@ -82,7 +82,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=8080
 ENV HOSTNAME=0.0.0.0
 ENV LIVE_COMPANION_PORT=3003
 
@@ -124,10 +124,10 @@ EXPOSE 3000
 # This is critical: a failed migration should NOT prevent the server from booting
 # (allows debugging via /api/v1/health + Railway logs)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/api/v1/health || exit 1
 
 # Start Next.js only (Live Companion temporarily disabled to fix port conflict).
 # The Live Companion service (port 3003) was interfering with Next.js (port 3000)
 # causing "Transport unknown" errors on the homepage.
 # TODO: Re-enable Live Companion as a separate Railway service for production.
-CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && echo \"PORT: $PORT\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; bun server.js"]
+CMD ["sh", "-c", "echo '=== Lamma startup (Phase B) ===' && echo \"DATABASE_URL: $([ -n \\\"$DATABASE_URL\\\" ] && echo set || echo NOT SET)\" && echo \"DIRECT_URL: $([ -n \\\"$DIRECT_URL\\\" ] && echo set || echo NOT SET)\" && echo \"NODE_ENV: $NODE_ENV\" && echo \"PORT: $PORT\" && bun ./node_modules/prisma/build/index.js migrate deploy ; sh scripts/inject-env.sh ; exec bun server.js"]
