@@ -77,7 +77,13 @@ export default async function LocaleLayout({ children, params }: Props & { child
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning className={fontVariables}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <ClerkProvider>
+        <ClerkProvider
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL}
+          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL}
+          signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL}
+          signUpFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL}
+        >
           <NextIntlClientProvider messages={messages}>
             <div className="flex min-h-screen flex-col">
               <SiteHeader />
